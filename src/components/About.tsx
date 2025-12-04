@@ -32,7 +32,7 @@ const About = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
             {[
               { value: "NICET", label: "Compliant" },
-              { value: "24-48hr", label: "Turnaround" },
+              { value: "Quick", label: "Turnaround" },
               { value: "CAD+PDF", label: "Deliverables" },
               { value: "100%", label: "Permit-Ready" },
             ].map((stat) => (
