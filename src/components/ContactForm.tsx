@@ -13,7 +13,9 @@ const ContactForm = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -34,16 +36,20 @@ const ContactForm = () => {
     setIsSubmitting(true);
 
     try {
-      const templateParams = {
-        ...formData,
-        attachments: files,
-      };
+      const form = new FormData();
+      form.append("name", formData.name);
+      form.append("company", formData.company);
+      form.append("email", formData.email);
+      form.append("phone", formData.phone);
+      form.append("details", formData.details);
+
+      files.forEach((file) => form.append("attachments", file));
 
       await emailjs.send(
-        "service_ox87hbr",       // Your Service ID
-        "template_l3lk4o3",      // Your Template ID
-        templateParams,
-        "mD1dBY0Dq0EPMZEam"      // Your Public Key
+        "service_ox87hbr", // your Service ID
+        "template_l3lk4o3", // your Template ID
+        Object.fromEntries(form.entries()), // convert FormData to plain object
+        "mD1dBY0Dq0EPMZEam" // your Public Key
       );
 
       alert("Quote request sent successfully!");
@@ -78,7 +84,9 @@ const ContactForm = () => {
             {/* Name & Company */}
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium mb-2">Name <span className="text-primary">*</span></label>
+                <label className="block text-sm font-medium mb-2">
+                  Name <span className="text-primary">*</span>
+                </label>
                 <input
                   type="text"
                   name="name"
@@ -105,7 +113,9 @@ const ContactForm = () => {
             {/* Email & Phone */}
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium mb-2">Email <span className="text-primary">*</span></label>
+                <label className="block text-sm font-medium mb-2">
+                  Email <span className="text-primary">*</span>
+                </label>
                 <input
                   type="email"
                   name="email"
@@ -131,7 +141,9 @@ const ContactForm = () => {
 
             {/* Project Details */}
             <div>
-              <label className="block text-sm font-medium mb-2">Project Details <span className="text-primary">*</span></label>
+              <label className="block text-sm font-medium mb-2">
+                Project Details <span className="text-primary">*</span>
+              </label>
               <textarea
                 name="details"
                 value={formData.details}
@@ -145,7 +157,9 @@ const ContactForm = () => {
 
             {/* File Upload */}
             <div>
-              <label className="block text-sm font-medium mb-2">Attach Files <span className="text-muted-foreground text-xs">(PDF, DWG, DXF, JPG, PNG)</span></label>
+              <label className="block text-sm font-medium mb-2">
+                Attach Files <span className="text-muted-foreground text-xs">(PDF, DWG, DXF, JPG, PNG)</span>
+              </label>
               <input
                 type="file"
                 multiple
@@ -159,12 +173,18 @@ const ContactForm = () => {
                 className="block border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition"
               >
                 <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground"><span className="text-primary font-medium">Click to upload</span> or drag and drop</p>
+                <p className="text-sm text-muted-foreground">
+                  <span className="text-primary font-medium">Click to upload</span> or drag and drop
+                </p>
               </label>
+
               {files.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {files.map((file, i) => (
-                    <div key={i} className="flex items-center justify-between px-4 py-2 border rounded-lg bg-card">
+                    <div
+                      key={i}
+                      className="flex items-center justify-between px-4 py-2 border rounded-lg bg-card"
+                    >
                       <span className="text-sm truncate max-w-[200px]">{file.name}</span>
                       <button type="button" onClick={() => removeFile(i)}>
                         <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
@@ -175,20 +195,33 @@ const ContactForm = () => {
               )}
             </div>
 
-            {/* Submit */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition flex items-center justify-center gap-2"
+              className="w-full py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Submitting..." : "Request a Quote"}
-              <Send className="w-5 h-5" />
+              {isSubmitting ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  Request a Quote
+                  <Send className="w-5 h-5" />
+                </>
+              )}
             </button>
           </div>
         </form>
       </div>
     </section>
   );
+};
+
+export default ContactForm;
+
 };
 
 export default ContactForm;
