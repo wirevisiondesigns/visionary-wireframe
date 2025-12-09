@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, DragEvent } from "react";
 import { Send, Upload, X } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 const ContactForm = () => {
   const [files, setFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -15,10 +18,61 @@ const ContactForm = () => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleDrop = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files) {
+      const newFiles = Array.from(e.dataTransfer.files);
+      setFiles((prev) => [...prev, ...newFiles]);
+    }
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    files.forEach((file) => formData.append("attachment", file));
+
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Quote Request Submitted!",
+          description: "Thank you! We'll get back to you within 24 hours.",
+        });
+        form.reset();
+        setFiles([]);
+      } else {
+        toast({
+          title: "Submission Failed",
+          description: "There was an error submitting your request. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Submission Error",
+        description: "There was an unexpected error. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section id="contact" className="py-24 md:py-32 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/20 to-background" />
-
       <div className="container mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
           <p className="text-primary text-sm font-medium tracking-wider uppercase mb-4">
@@ -32,22 +86,20 @@ const ContactForm = () => {
           </p>
         </div>
 
-        {/* REAL submission using FormSubmit */}
         <form
           action="https://formsubmit.co/wirevisiondesignsllc@gmail.com"
           method="POST"
           encType="multipart/form-data"
+          onSubmit={handleSubmit}
           className="max-w-2xl mx-auto"
         >
-          {/* FormSubmit settings */}
           <input type="hidden" name="_subject" value="New Quote Request from Website" />
           <input type="hidden" name="_captcha" value="false" />
           <input type="hidden" name="_template" value="table" />
           <input type="hidden" name="_next" value="https://wirevisiondesigns.com/thank-you" />
 
           <div className="space-y-6">
-
-            {/* Name */}
+            {/* Name & Company */}
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -61,8 +113,6 @@ const ContactForm = () => {
                   placeholder="Your name"
                 />
               </div>
-
-              {/* Company */}
               <div>
                 <label className="block text-sm font-medium mb-2">Company</label>
                 <input
@@ -74,7 +124,7 @@ const ContactForm = () => {
               </div>
             </div>
 
-            {/* Email + Phone */}
+            {/* Email & Phone */}
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -88,7 +138,6 @@ const ContactForm = () => {
                   placeholder="you@company.com"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium mb-2">Phone</label>
                 <input
@@ -122,9 +171,10 @@ const ContactForm = () => {
 
               <input
                 type="file"
-                name="attachments"
+                name="attachment"
                 multiple
                 accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg"
+                ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
                 id="files"
@@ -132,6 +182,8 @@ const ContactForm = () => {
 
               <label
                 htmlFor="files"
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
                 className="block border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition"
               >
                 <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
@@ -160,12 +212,21 @@ const ContactForm = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition flex items-center justify-center gap-2"
+              disabled={isSubmitting}
+              className="w-full py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Request a Quote
-              <Send className="w-5 h-5" />
+              {isSubmitting ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  Request a Quote
+                  <Send className="w-5 h-5" />
+                </>
+              )}
             </button>
-
           </div>
         </form>
       </div>
@@ -174,3 +235,4 @@ const ContactForm = () => {
 };
 
 export default ContactForm;
+
