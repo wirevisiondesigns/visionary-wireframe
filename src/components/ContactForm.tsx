@@ -1,24 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Send, Upload, X } from "lucide-react";
 import emailjs from "@emailjs/browser";
 
 const ContactForm = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    company: "",
-    email: "",
-    phone: "",
-    details: "",
-  });
+  const formRef = useRef<HTMLFormElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -33,31 +20,24 @@ const ContactForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formRef.current) return;
+
     setIsSubmitting(true);
 
     try {
-      const form = new FormData();
-      form.append("name", formData.name);
-      form.append("company", formData.company);
-      form.append("email", formData.email);
-      form.append("phone", formData.phone);
-      form.append("details", formData.details);
-
-      files.forEach((file) => form.append("attachments", file));
-
-      await emailjs.send(
-        "service_ox87hbr", // your Service ID
-        "template_l3lk4o3", // your Template ID
-        Object.fromEntries(form.entries()), // convert FormData to plain object
-        "mD1dBY0Dq0EPMZEam" // your Public Key
+      await emailjs.sendForm(
+        "service_ox87hbr",        // Replace with your Service ID
+        "template_l3lk4o3",       // Replace with your Template ID
+        formRef.current,
+        "mD1dBY0Dq0EPMZEam"      // Replace with your Public Key
       );
 
-      alert("Quote request sent successfully!");
-      setFormData({ name: "", company: "", email: "", phone: "", details: "" });
+      alert("Quote request submitted! We will get back to you shortly.");
+      formRef.current.reset();
       setFiles([]);
     } catch (error) {
-      console.error("EmailJS error:", error);
-      alert("There was an error sending your request. Please try again.");
+      console.error("EmailJS Error:", error);
+      alert("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -66,6 +46,7 @@ const ContactForm = () => {
   return (
     <section id="contact" className="py-24 md:py-32 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/20 to-background" />
+
       <div className="container mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
           <p className="text-primary text-sm font-medium tracking-wider uppercase mb-4">
@@ -79,7 +60,7 @@ const ContactForm = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
+        <form ref={formRef} onSubmit={handleSubmit} className="max-w-2xl mx-auto">
           <div className="space-y-6">
             {/* Name & Company */}
             <div className="grid md:grid-cols-2 gap-6">
@@ -90,8 +71,6 @@ const ContactForm = () => {
                 <input
                   type="text"
                   name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
                   required
                   className="w-full px-4 py-3 rounded-lg border border-border bg-card placeholder:text-muted-foreground focus:ring-2 focus:ring-primary transition"
                   placeholder="Your name"
@@ -102,8 +81,6 @@ const ContactForm = () => {
                 <input
                   type="text"
                   name="company"
-                  value={formData.company}
-                  onChange={handleInputChange}
                   className="w-full px-4 py-3 rounded-lg border border-border bg-card placeholder:text-muted-foreground focus:ring-2 focus:ring-primary transition"
                   placeholder="Your company"
                 />
@@ -119,8 +96,6 @@ const ContactForm = () => {
                 <input
                   type="email"
                   name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
                   required
                   className="w-full px-4 py-3 rounded-lg border border-border bg-card placeholder:text-muted-foreground focus:ring-2 focus:ring-primary transition"
                   placeholder="you@company.com"
@@ -131,8 +106,6 @@ const ContactForm = () => {
                 <input
                   type="tel"
                   name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
                   className="w-full px-4 py-3 rounded-lg border border-border bg-card placeholder:text-muted-foreground focus:ring-2 focus:ring-primary transition"
                   placeholder="(555) 123-4567"
                 />
@@ -146,8 +119,6 @@ const ContactForm = () => {
               </label>
               <textarea
                 name="details"
-                value={formData.details}
-                onChange={handleInputChange}
                 required
                 rows={5}
                 className="w-full px-4 py-3 rounded-lg border border-border bg-card placeholder:text-muted-foreground focus:ring-2 focus:ring-primary transition resize-none"
@@ -160,14 +131,17 @@ const ContactForm = () => {
               <label className="block text-sm font-medium mb-2">
                 Attach Files <span className="text-muted-foreground text-xs">(PDF, DWG, DXF, JPG, PNG)</span>
               </label>
+
               <input
                 type="file"
+                name="attachments"
                 multiple
                 accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg"
                 onChange={handleFileChange}
                 className="hidden"
                 id="files"
               />
+
               <label
                 htmlFor="files"
                 className="block border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition"
@@ -201,27 +175,14 @@ const ContactForm = () => {
               disabled={isSubmitting}
               className="w-full py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  Request a Quote
-                  <Send className="w-5 h-5" />
-                </>
-              )}
+              {isSubmitting ? "Submitting..." : "Request a Quote"}
+              <Send className="w-5 h-5" />
             </button>
           </div>
         </form>
       </div>
     </section>
   );
-};
-
-export default ContactForm;
-
 };
 
 export default ContactForm;
