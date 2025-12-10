@@ -4,7 +4,7 @@ import Services from "../components/Services";
 import WhyChooseUs from "../components/WhyChooseUs";
 import Process from "../components/Process";
 import About from "../components/About";
-import ContactForm from "../components/ContactFormNEW";
+import ContactForm from "../components/ContactForm";
 import Footer from "../components/Footer";
 
 const Index = () => {
