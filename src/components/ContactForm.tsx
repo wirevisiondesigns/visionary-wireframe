@@ -3,6 +3,9 @@ import emailjs from "@emailjs/browser";
 import { Send, Upload, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
+// 🔥 DIAGNOSTIC LINE — SHOULD SHOW IN BROWSER CONSOLE
+console.log("CONTACT FORM COMPONENT LOADED");
+
 const ContactForm = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const [files, setFiles] = useState<File[]>([]);
@@ -22,18 +25,17 @@ const ContactForm = () => {
   const sendEmail = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // ⭐ DIAGNOSTIC LINE — SHOULD APPEAR IN BROWSER CONSOLE
-    console.log("FORM SUBMITTED");
+    // 🔥 DIAGNOSTIC LINE — SHOULD SHOW IF FORM IS SUBMITTED
+    console.log("FORM SUBMITTED!");
 
     if (!formRef.current) return;
-
     setIsSubmitting(true);
 
     try {
       await emailjs.sendForm(
         "service_ox87hbr",      // Your EmailJS Service ID
-        "template_l3lk4o3",     // Your EmailJS Template ID
-        formRef.current,        // Form Reference
+        "template_l3lk4o3",     // Your Template ID
+        formRef.current,        // Reference to form element
         "mD1dBY0Dq0EPMZEam"     // Your Public Key
       );
 
@@ -47,9 +49,10 @@ const ContactForm = () => {
 
     } catch (error) {
       console.error("EmailJS error:", error);
+
       toast({
         title: "Submission Failed",
-        description: "There was an error submitting your request. Please try again.",
+        description: "There was an error submitting your request.",
         variant: "destructive",
       });
     }
@@ -73,7 +76,6 @@ const ContactForm = () => {
           </p>
         </div>
 
-        {/* EMAILJS FORM */}
         <form ref={formRef} onSubmit={sendEmail} className="max-w-2xl mx-auto">
           <div className="space-y-6">
 
@@ -169,7 +171,7 @@ const ContactForm = () => {
               )}
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={isSubmitting}
@@ -187,6 +189,7 @@ const ContactForm = () => {
 };
 
 export default ContactForm;
+
 
 export default ContactForm;
 
