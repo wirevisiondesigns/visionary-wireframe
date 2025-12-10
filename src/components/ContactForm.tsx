@@ -1,52 +1,36 @@
-import { useRef, useState } from "react";
-import { Send, Upload, X } from "lucide-react";
+import { useState } from "react";
 import emailjs from "@emailjs/browser";
 
 const ContactForm = () => {
-  const formRef = useRef<HTMLFormElement>(null);
-  const [files, setFiles] = useState<File[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isSent, setIsSent] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setFiles((prev) => [...prev, ...newFiles]);
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const sendEmail = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formRef.current) return;
+    setIsSending(true);
 
-    setIsSubmitting(true);
+    const form = e.currentTarget;
 
     try {
       await emailjs.sendForm(
-        "service_ox87hbr",        // Replace with your Service ID
-        "template_l3lk4o3",       // Replace with your Template ID
-        formRef.current,
-        "mD1dBY0Dq0EPMZEam"      // Replace with your Public Key
+        "service_ox87hbr",      // your EmailJS Service ID
+        "template_l3lk4o3",     // your Template ID
+        form,
+        "mD1dBY0Dq0EPMZEam"     // your Public Key
       );
 
-      alert("Quote request submitted! We will get back to you shortly.");
-      formRef.current.reset();
-      setFiles([]);
+      setIsSent(true);
+      form.reset();
     } catch (error) {
       console.error("EmailJS Error:", error);
       alert("Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
+
+    setIsSending(false);
   };
 
   return (
     <section id="contact" className="py-24 md:py-32 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/20 to-background" />
-
       <div className="container mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
           <p className="text-primary text-sm font-medium tracking-wider uppercase mb-4">
@@ -60,124 +44,58 @@ const ContactForm = () => {
           </p>
         </div>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="max-w-2xl mx-auto">
+        <form onSubmit={sendEmail} className="max-w-2xl mx-auto">
           <div className="space-y-6">
-            {/* Name & Company */}
+
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Name <span className="text-primary">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-border bg-card placeholder:text-muted-foreground focus:ring-2 focus:ring-primary transition"
-                  placeholder="Your name"
-                />
+                <label className="block mb-2">Name *</label>
+                <input type="text" name="name" required className="w-full px-4 py-3 border rounded-lg" />
               </div>
+
               <div>
-                <label className="block text-sm font-medium mb-2">Company</label>
-                <input
-                  type="text"
-                  name="company"
-                  className="w-full px-4 py-3 rounded-lg border border-border bg-card placeholder:text-muted-foreground focus:ring-2 focus:ring-primary transition"
-                  placeholder="Your company"
-                />
+                <label className="block mb-2">Company</label>
+                <input type="text" name="company" className="w-full px-4 py-3 border rounded-lg" />
               </div>
             </div>
 
-            {/* Email & Phone */}
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Email <span className="text-primary">*</span>
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-border bg-card placeholder:text-muted-foreground focus:ring-2 focus:ring-primary transition"
-                  placeholder="you@company.com"
-                />
+                <label className="block mb-2">Email *</label>
+                <input type="email" name="email" required className="w-full px-4 py-3 border rounded-lg" />
               </div>
+
               <div>
-                <label className="block text-sm font-medium mb-2">Phone</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  className="w-full px-4 py-3 rounded-lg border border-border bg-card placeholder:text-muted-foreground focus:ring-2 focus:ring-primary transition"
-                  placeholder="(555) 123-4567"
-                />
+                <label className="block mb-2">Phone</label>
+                <input type="tel" name="phone" className="w-full px-4 py-3 border rounded-lg" />
               </div>
             </div>
 
-            {/* Project Details */}
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Project Details <span className="text-primary">*</span>
-              </label>
-              <textarea
-                name="details"
-                required
-                rows={5}
-                className="w-full px-4 py-3 rounded-lg border border-border bg-card placeholder:text-muted-foreground focus:ring-2 focus:ring-primary transition resize-none"
-                placeholder="Describe your project..."
-              />
+              <label className="block mb-2">Project Details *</label>
+              <textarea name="details" required rows={5} className="w-full px-4 py-3 border rounded-lg" />
             </div>
 
-            {/* File Upload */}
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Attach Files <span className="text-muted-foreground text-xs">(PDF, DWG, DXF, JPG, PNG)</span>
+              <label className="block mb-2">
+                Attach File (PDF, JPG, PNG)
               </label>
-
-              <input
-                type="file"
-                name="attachments"
-                multiple
-                accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg"
-                onChange={handleFileChange}
-                className="hidden"
-                id="files"
-              />
-
-              <label
-                htmlFor="files"
-                className="block border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition"
-              >
-                <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  <span className="text-primary font-medium">Click to upload</span> or drag and drop
-                </p>
-              </label>
-
-              {files.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  {files.map((file, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between px-4 py-2 border rounded-lg bg-card"
-                    >
-                      <span className="text-sm truncate max-w-[200px]">{file.name}</span>
-                      <button type="button" onClick={() => removeFile(i)}>
-                        <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <input type="file" name="attachment" accept=".pdf,.jpg,.jpeg,.png" />
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              disabled={isSending}
+              className="w-full py-4 bg-primary text-white rounded-lg"
             >
-              {isSubmitting ? "Submitting..." : "Request a Quote"}
-              <Send className="w-5 h-5" />
+              {isSending ? "Sending..." : "Request a Quote"}
             </button>
+
+            {isSent && (
+              <p className="text-green-600 mt-4 text-center">
+                Your message has been sent!
+              </p>
+            )}
           </div>
         </form>
       </div>
@@ -186,3 +104,4 @@ const ContactForm = () => {
 };
 
 export default ContactForm;
+
