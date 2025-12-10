@@ -21,16 +21,20 @@ const ContactForm = () => {
 
   const sendEmail = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // ⭐ DIAGNOSTIC LINE — SHOULD APPEAR IN BROWSER CONSOLE
+    console.log("FORM SUBMITTED");
+
     if (!formRef.current) return;
 
     setIsSubmitting(true);
 
     try {
       await emailjs.sendForm(
-        "service_ox87hbr",      // Service ID
-        "template_l3lk4o3",     // Template ID
-        formRef.current,        // Form reference
-        "mD1dBY0Dq0EPMZEam"     // Public key
+        "service_ox87hbr",      // Your EmailJS Service ID
+        "template_l3lk4o3",     // Your EmailJS Template ID
+        formRef.current,        // Form Reference
+        "mD1dBY0Dq0EPMZEam"     // Your Public Key
       );
 
       toast({
@@ -56,6 +60,7 @@ const ContactForm = () => {
   return (
     <section id="contact" className="py-24 md:py-32 relative">
       <div className="container mx-auto px-6 relative z-10">
+
         <div className="text-center mb-16">
           <p className="text-primary text-sm font-medium tracking-wider uppercase mb-4">
             Get Started
@@ -173,12 +178,15 @@ const ContactForm = () => {
               {isSubmitting ? "Sending..." : "Request a Quote"}
               <Send className="w-5 h-5 ml-2" />
             </button>
+
           </div>
         </form>
       </div>
     </section>
   );
 };
+
+export default ContactForm;
 
 export default ContactForm;
 
