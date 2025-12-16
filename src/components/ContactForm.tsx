@@ -1,154 +1,165 @@
-import React, { useState } from "react";
+import { useRef, useState } from "react";
 import emailjs from "@emailjs/browser";
+import { Send } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
-const ContactForm: React.FC = () => {
-  const [name, setName] = useState("");
-  const [company, setCompany] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [details, setDetails] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+const ContactForm = () => {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const uploadFile = async (): Promise<string> => {
-    if (!file) return "No file attached";
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await fetch("https://file.io/?expires=1w", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    if (!data.success || !data.link) {
-      throw new Error("File upload failed");
-    }
-
-    return data.link;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const sendEmail = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setSuccess(null);
-    setError(null);
+
+    if (!formRef.current) return;
+
+    setIsSubmitting(true);
 
     try {
-      const attachmentLink = await uploadFile();
-
-      await emailjs.send(
-        "service_ox87hbr",
-        "template_l3lk4o3",
-        {
-          name,
-          company,
-          email,
-          phone,
-          details,
-          attachments: attachmentLink,
-          from_name: name,
-          reply_to: email,
-        },
-        "mD1dBY0Dq0EPMZEam"
+      await emailjs.sendForm(
+        "service_ox87hbr",          // ✅ Your Service ID
+        "template_l3lk4o3",         // ✅ Your Template ID
+        formRef.current,
+        "mD1dBY0Dq0EPMZEam"         // ✅ Your Public Key
       );
 
-      setSuccess("Your request has been sent successfully.");
-      setName("");
-      setCompany("");
-      setEmail("");
-      setPhone("");
-      setDetails("");
-      setFile(null);
-    } catch (err: any) {
-      console.error("ContactForm error:", err);
-      setError(err?.message || "Submission failed. Please try again.");
+      toast({
+        title: "Quote Request Submitted!",
+        description: "Thank you! We'll get back to you within 24 hours.",
+      });
+
+      formRef.current.reset();
+    } catch (error) {
+      console.error("EmailJS Error:", error);
+      toast({
+        title: "Submission Failed",
+        description: "Please try again or email us directly.",
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <section id="contact" className="scroll-mt-24 py-24">
-      <div className="max-w-2xl mx-auto px-6">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-bold text-white">
+    <section id="contact" className="py-24 md:py-32 relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/20 to-background" />
+
+      <div className="container mx-auto px-6 relative z-10">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <p className="text-primary text-sm font-medium tracking-wider uppercase mb-4">
+            Get Started
+          </p>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
             Request a Quote
           </h2>
-          <p className="text-gray-400 mt-2">
-            Share your project details and we’ll get back to you within 24 hours.
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Share your project details and we'll provide a fast, competitive quote.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Name *"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full p-3 rounded bg-gray-900 text-white border border-gray-700"
-          />
+        {/* Form */}
+        <form
+          ref={formRef}
+          onSubmit={sendEmail}
+          className="max-w-2xl mx-auto space-y-6"
+        >
+          {/* Name & Company */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Name <span className="text-primary">*</span>
+              </label>
+              <input
+                type="text"
+                name="name"
+                required
+                autoComplete="name"
+                className="w-full px-4 py-3 rounded-lg border border-border bg-card"
+                placeholder="Your name"
+              />
+            </div>
 
-          <input
-            type="text"
-            placeholder="Company"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            className="w-full p-3 rounded bg-gray-900 text-white border border-gray-700"
-          />
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Company
+              </label>
+              <input
+                type="text"
+                name="company"
+                autoComplete="organization"
+                className="w-full px-4 py-3 rounded-lg border border-border bg-card"
+                placeholder="Your company"
+              />
+            </div>
+          </div>
 
-          <input
-            type="email"
-            placeholder="Email *"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-3 rounded bg-gray-900 text-white border border-gray-700"
-          />
+          {/* Email & Phone */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Email <span className="text-primary">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                required
+                autoComplete="email"
+                className="w-full px-4 py-3 rounded-lg border border-border bg-card"
+                placeholder="you@company.com"
+              />
+            </div>
 
-          <input
-            type="tel"
-            placeholder="Phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full p-3 rounded bg-gray-900 text-white border border-gray-700"
-          />
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Phone
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                autoComplete="tel"
+                className="w-full px-4 py-3 rounded-lg border border-border bg-card"
+                placeholder="(555) 123-4567"
+              />
+            </div>
+          </div>
 
-          <textarea
-            placeholder="Project Details *"
-            required
-            value={details}
-            onChange={(e) => setDetails(e.target.value)}
-            rows={6}
-            className="w-full p-3 rounded bg-gray-900 text-white border border-gray-700"
-          />
+          {/* Project Details */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Project Details <span className="text-primary">*</span>
+            </label>
+            <textarea
+              name="details"
+              required
+              rows={5}
+              className="w-full px-4 py-3 rounded-lg border border-border bg-card resize-none"
+              placeholder="Describe your project, system types, and requirements..."
+            />
+          </div>
 
-          <input
-            type="file"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="block w-full text-sm text-gray-300"
-          />
+          {/* Attachment Notice */}
+          <div className="text-sm text-muted-foreground bg-secondary/20 border border-border rounded-lg p-4">
+            <strong>Attachments:</strong> After submitting, we’ll reply with a secure
+            upload link — or you may email files directly to{" "}
+            <a
+              href="mailto:wirevisiondesignsllc@gmail.com"
+              className="text-primary underline"
+            >
+              wirevisiondesignsllc@gmail.com
+            </a>
+            .
+          </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white py-3 rounded font-semibold"
+            disabled={isSubmitting}
+            className="w-full py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition flex items-center justify-center gap-2 disabled:opacity-70"
           >
-            {loading ? "Sending..." : "Send Message"}
+            {isSubmitting ? "Submitting..." : "Request a Quote"}
+            <Send className="w-5 h-5" />
           </button>
-
-          {success && (
-            <p className="text-green-500 text-center font-medium">{success}</p>
-          )}
-          {error && (
-            <p className="text-red-500 text-center font-medium">{error}</p>
-          )}
         </form>
       </div>
     </section>
@@ -156,4 +167,3 @@ const ContactForm: React.FC = () => {
 };
 
 export default ContactForm;
-
