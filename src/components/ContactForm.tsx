@@ -12,9 +12,8 @@ const ContactForm: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Upload file to file.io (free workaround)
-  const uploadFile = async () => {
-    if (!file) return "No file attached";
+  const uploadFile = async (): Promise<string | null> => {
+    if (!file) return null;
 
     const formData = new FormData();
     formData.append("file", file);
@@ -36,15 +35,19 @@ const ContactForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setSuccess(null);
     setError(null);
+    setSuccess(null);
 
     try {
-      const attachmentLink = await uploadFile();
+      let attachmentLink = "No file attached";
+
+      if (file) {
+        attachmentLink = await uploadFile();
+      }
 
       await emailjs.send(
-        "service_ox87hbr",        // ✅ CORRECT
-        "template_l3lk4o3",       // ✅ CORRECT
+        "service_ox87hbr",
+        "template_l3lk4o3",
         {
           name,
           company,
@@ -53,10 +56,10 @@ const ContactForm: React.FC = () => {
           details,
           attachments: attachmentLink,
         },
-        "mD1dBY0Dq0EPMZEam"        // ✅ CORRECT
+        "mD1dBY0Dq0EPMZEam"
       );
 
-      setSuccess("Message sent successfully!");
+      setSuccess("Your request has been sent successfully.");
       setName("");
       setCompany("");
       setEmail("");
@@ -64,7 +67,7 @@ const ContactForm: React.FC = () => {
       setDetails("");
       setFile(null);
     } catch (err) {
-      console.error("EmailJS error:", err);
+      console.error(err);
       setError("Submission failed. Please try again.");
     }
 
@@ -72,69 +75,80 @@ const ContactForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-xl mx-auto">
-      <input
-        type="text"
-        placeholder="Name *"
-        required
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="w-full p-3 rounded bg-black border border-gray-700 text-white"
-      />
+    <section id="contact" className="scroll-mt-24 py-24">
+      <div className="max-w-xl mx-auto text-center mb-8">
+        <h2 className="text-3xl font-bold text-white">Request a Quote</h2>
+        <p className="text-gray-400 mt-2">
+          Share your project details and we’ll get back to you within 24 hours.
+        </p>
+      </div>
 
-      <input
-        type="text"
-        placeholder="Company"
-        value={company}
-        onChange={(e) => setCompany(e.target.value)}
-        className="w-full p-3 rounded bg-black border border-gray-700 text-white"
-      />
+      <form onSubmit={handleSubmit} className="max-w-xl mx-auto space-y-4">
+        <input
+          type="text"
+          placeholder="Name"
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full p-3 rounded bg-gray-900 text-white border border-gray-700"
+        />
 
-      <input
-        type="email"
-        placeholder="Email *"
-        required
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="w-full p-3 rounded bg-black border border-gray-700 text-white"
-      />
+        <input
+          type="text"
+          placeholder="Company"
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+          className="w-full p-3 rounded bg-gray-900 text-white border border-gray-700"
+        />
 
-      <input
-        type="tel"
-        placeholder="Phone"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        className="w-full p-3 rounded bg-black border border-gray-700 text-white"
-      />
+        <input
+          type="email"
+          placeholder="Email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-3 rounded bg-gray-900 text-white border border-gray-700"
+        />
 
-      <textarea
-        placeholder="Project Details *"
-        required
-        value={details}
-        onChange={(e) => setDetails(e.target.value)}
-        className="w-full p-3 rounded bg-black border border-gray-700 text-white min-h-[120px]"
-      />
+        <input
+          type="text"
+          placeholder="Phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className="w-full p-3 rounded bg-gray-900 text-white border border-gray-700"
+        />
 
-      <input
-        type="file"
-        onChange={(e) =>
-          setFile(e.target.files ? e.target.files[0] : null)
-        }
-        className="text-white"
-      />
+        <textarea
+          placeholder="Project Details"
+          required
+          value={details}
+          onChange={(e) => setDetails(e.target.value)}
+          className="w-full p-3 rounded bg-gray-900 text-white border border-gray-700 min-h-[140px]"
+        />
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded"
-      >
-        {loading ? "Sending..." : "Send Message"}
-      </button>
+        <input
+          type="file"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          className="text-white"
+        />
 
-      {success && <p className="text-green-500">{success}</p>}
-      {error && <p className="text-red-500">{error}</p>}
-    </form>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded font-semibold"
+        >
+          {loading ? "Sending..." : "Send Message"}
+        </button>
+
+        {success && <p className="text-green-500 text-center">{success}</p>}
+        {error && <p className="text-red-500 text-center">{error}</p>}
+      </form>
+    </section>
   );
+};
+
+export default ContactForm;
+
 };
 
 export default ContactForm;
