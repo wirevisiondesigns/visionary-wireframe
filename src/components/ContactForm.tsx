@@ -12,19 +12,19 @@ const ContactForm: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Upload file to file.io (external link only)
-  const uploadFileToFileIO = async (): Promise<string | null> => {
-    if (!file) return null;
+  // Upload file to file.io (free workaround)
+  const uploadFile = async () => {
+    if (!file) return "No file attached";
 
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetch("https://file.io/?expires=1w", {
+    const res = await fetch("https://file.io/?expires=1w", {
       method: "POST",
       body: formData,
     });
 
-    const data = await response.json();
+    const data = await res.json();
 
     if (!data.success) {
       throw new Error("File upload failed");
@@ -40,15 +40,11 @@ const ContactForm: React.FC = () => {
     setError(null);
 
     try {
-      let attachmentLink = "No file attached";
-
-      if (file) {
-        attachmentLink = (await uploadFileToFileIO()) || attachmentLink;
-      }
+      const attachmentLink = await uploadFile();
 
       await emailjs.send(
-        "service_iukubsk",
-        "template_bx8il2j",
+        "service_ox87hbr",        // ✅ CORRECT
+        "template_l3lk4o3",       // ✅ CORRECT
         {
           name,
           company,
@@ -57,10 +53,10 @@ const ContactForm: React.FC = () => {
           details,
           attachments: attachmentLink,
         },
-        "X4K1XZNFxV9Xe6V4T"
+        "mD1dBY0Dq0EPMZEam"        // ✅ CORRECT
       );
 
-      setSuccess("Quote request sent successfully!");
+      setSuccess("Message sent successfully!");
       setName("");
       setCompany("");
       setEmail("");
@@ -68,7 +64,7 @@ const ContactForm: React.FC = () => {
       setDetails("");
       setFile(null);
     } catch (err) {
-      console.error(err);
+      console.error("EmailJS error:", err);
       setError("Submission failed. Please try again.");
     }
 
@@ -76,91 +72,68 @@ const ContactForm: React.FC = () => {
   };
 
   return (
-    <section
-      id="contact"
-      className="relative py-32 bg-background text-foreground z-10"
-    >
-      <div className="container mx-auto px-6 max-w-2xl">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-          Request a Quote
-        </h2>
-        <p className="text-muted-foreground text-center mb-10">
-          Share your project details and we’ll get back to you within 24 hours.
-        </p>
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-xl mx-auto">
+      <input
+        type="text"
+        placeholder="Name *"
+        required
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="w-full p-3 rounded bg-black border border-gray-700 text-white"
+      />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <input
-            type="text"
-            placeholder="Name *"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground"
-          />
+      <input
+        type="text"
+        placeholder="Company"
+        value={company}
+        onChange={(e) => setCompany(e.target.value)}
+        className="w-full p-3 rounded bg-black border border-gray-700 text-white"
+      />
 
-          <input
-            type="text"
-            placeholder="Company"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground"
-          />
+      <input
+        type="email"
+        placeholder="Email *"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="w-full p-3 rounded bg-black border border-gray-700 text-white"
+      />
 
-          <input
-            type="email"
-            placeholder="Email *"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground"
-          />
+      <input
+        type="tel"
+        placeholder="Phone"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        className="w-full p-3 rounded bg-black border border-gray-700 text-white"
+      />
 
-          <input
-            type="text"
-            placeholder="Phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground"
-          />
+      <textarea
+        placeholder="Project Details *"
+        required
+        value={details}
+        onChange={(e) => setDetails(e.target.value)}
+        className="w-full p-3 rounded bg-black border border-gray-700 text-white min-h-[120px]"
+      />
 
-          <textarea
-            placeholder="Project Details *"
-            required
-            value={details}
-            onChange={(e) => setDetails(e.target.value)}
-            rows={5}
-            className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground"
-          />
+      <input
+        type="file"
+        onChange={(e) =>
+          setFile(e.target.files ? e.target.files[0] : null)
+        }
+        className="text-white"
+      />
 
-          <input
-            type="file"
-            onChange={(e) =>
-              setFile(e.target.files ? e.target.files[0] : null)
-            }
-            className="w-full text-sm text-muted-foreground"
-          />
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded"
+      >
+        {loading ? "Sending..." : "Send Message"}
+      </button>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 rounded-lg bg-primary text-white font-semibold hover:opacity-90 transition"
-          >
-            {loading ? "Sending..." : "Send Message"}
-          </button>
-
-          {success && (
-            <p className="text-green-500 text-center font-medium">
-              {success}
-            </p>
-          )}
-          {error && (
-            <p className="text-red-500 text-center font-medium">
-              {error}
-            </p>
-          )}
-        </form>
-      </div>
-    </section>
+      {success && <p className="text-green-500">{success}</p>}
+      {error && <p className="text-red-500">{error}</p>}
+    </form>
   );
 };
 
